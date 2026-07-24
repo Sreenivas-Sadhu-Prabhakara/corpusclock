@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="/corpusclock/">
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A dated, month-by-month retirement corpus depletion ledger with a return-by-inflation sensitivity table. You enter every rate; it computes the arithmetic to the paise — no forecasts, no advice. Runs on your machine; this demo stores nothing.">
+
+  <meta property="og:title" content="Month-by-month retirement corpus depletion calculator with dates — corpusclock">
+  <meta property="og:description" content="See exactly which month your retirement corpus runs out, under your own assumptions, with a rate-by-inflation sensitivity grid. Free, private, offline.">
+  <meta property="og:type" content="website">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="corpusclock">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <title>Month-by-Month Retirement Corpus Depletion Calculator with Dates — corpusclock</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    #seo-landing { max-width: 780px; margin: 0 auto; padding: 24px 20px 8px; line-height: 1.55;
+      color: #1F2937; background: #F5F7FA; }
+    #seo-landing h1 { font-size: 1.5rem; color: #3D5A80; margin: 0 0 10px; line-height: 1.3; }
+    #seo-landing h2 { font-size: 1.05rem; margin: 22px 0 6px; color: #1F2937; }
+    #seo-landing a { color: #9C4A20; }
+    #seo-landing code { background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 4px;
+      font-variant-numeric: tabular-nums; }
+    #seo-landing .lede { font-size: 1.02rem; }
+    #seo-landing table { border-collapse: collapse; font-variant-numeric: tabular-nums; margin: 8px 0; }
+    #seo-landing th, #seo-landing td { border: 1px solid #c3ccda; padding: 4px 10px; text-align: right; }
+    #seo-landing th:first-child, #seo-landing td:first-child { text-align: left; }
+    #flutter-app { height: 82vh; min-height: 520px; border-top: 3px solid #9C4A20; }
+    @media (prefers-color-scheme: dark) {
+      #seo-landing { color: #E8ECF2; background: #131A24; }
+      #seo-landing h1 { color: #8FB0D9; }
+      #seo-landing h2 { color: #E8ECF2; }
+      #seo-landing a { color: #E8A87C; }
+      #seo-landing code { background: rgba(255,255,255,0.12); }
+      #seo-landing th, #seo-landing td { border-color: #33405a; }
+    }
+  </style>
+
+  <!-- Crawlable structured data: the Flutter canvas is not indexable, so the
+       facts live in real HTML + JSON-LD. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "corpusclock",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web, Windows, macOS, Linux, Android, iOS",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "description": "A dated month-by-month retirement corpus depletion ledger plus a return-by-inflation sensitivity grid. The user supplies every rate; corpusclock computes the arithmetic in integer paise and makes no forecast or recommendation."
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How long will my retirement money last?",
+        "acceptedAnswer": { "@type": "Answer", "text": "That depends entirely on your assumptions, and corpusclock refuses to guess them. You enter your corpus, monthly spend, an annual return rate and an annual inflation rate; it then runs a dated month-by-month ledger and tells you exactly which month the corpus depletes under those numbers. Change a rate and the date changes. It is arithmetic on your inputs, not a prediction of what markets will do." }
+      },
+      {
+        "@type": "Question",
+        "name": "What convention does the depletion calculation use?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Each month the withdrawal is taken first; if the balance cannot cover it, the corpus depletes that month. Otherwise the spend is subtracted and interest is added on the remainder at your annual return divided by 12 (a flat nominal monthly rate, not effective compounding). The monthly spend steps up once every 12 months by your inflation rate, so you can check any year by hand. Other calculators use other conventions and will differ." }
+      },
+      {
+        "@type": "Question",
+        "name": "Does corpusclock suggest a return rate or a safe withdrawal rate?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No. It ships no suggested, typical, or expected rates and gives no safe-withdrawal-rate advice. The only numbers it shows are the ones you type. The sample figures in the demo are illustrative example inputs, not recommendations." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the sensitivity table?",
+        "acceptedAnswer": { "@type": "Answer", "text": "A grid of your return rate plus or minus two points against your inflation rate plus or minus two points, in one-point steps. Each cell shows the depletion month for that pair, so you can see how sensitive the outcome is to the rates you assumed. A cell is a what-if, not a plan." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my data private?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. The full app is local-first: your saved scenarios live in a SQLite file on your own machine and the app runs on localhost. This web demo stores nothing on any server and nothing you type leaves the page; a refresh clears it." }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <main id="seo-landing">
+    <h1>Your retirement corpus, month by month: a dated depletion ledger with a sensitivity table — under your assumptions, on your machine</h1>
+    <p class="lede"><strong>corpusclock</strong> turns five numbers — your corpus,
+    your monthly spend, an annual return rate, an annual inflation rate and a start
+    month — into a dated, month-by-month ledger showing exactly when the money runs
+    out, plus a return-by-inflation sensitivity grid. Every result is labelled
+    <em>under your assumptions</em>. It is a <strong>month-by-month retirement corpus
+    depletion calculator with dates</strong> — not a forecast, not advice, just
+    arithmetic you can check by hand.</p>
+
+    <h2>How the depletion ledger works</h2>
+    <p>Each month the withdrawal is taken at the start. If the balance cannot cover
+    it, the corpus depletes that month. Otherwise the spend is subtracted and
+    interest is added on the remainder at your <code>annual return ÷ 12</code>. The
+    monthly spend steps up once a year by your inflation rate. Everything is computed
+    in integer paise, so the parts reconcile exactly.</p>
+
+    <h2>A worked example</h2>
+    <p>A <code>₹30,00,000</code> corpus, spending <code>₹30,000</code> a month, at a
+    <code>8%</code> return and <code>6%</code> inflation from <code>2026-08</code>,
+    lasts <strong>113 months and depletes in 2036-01</strong> under those
+    assumptions — the month-114 withdrawal has grown to <code>₹50,684.37</code> and
+    the balance can no longer cover it.</p>
+
+    <table>
+      <tr><th>Return \ Inflation</th><th>4%</th><th>6%</th><th>8%</th></tr>
+      <tr><td>6%</td><td>2035-11</td><td>2035-03</td><td>2034-08</td></tr>
+      <tr><td>8%</td><td>2036-12</td><td>2036-01</td><td>2035-04</td></tr>
+      <tr><td>10%</td><td>2038-06</td><td>2037-02</td><td>2036-02</td></tr>
+    </table>
+    <p style="font-size:0.85rem;opacity:0.75">Illustrative sensitivity grid for the
+    example above — each cell is the depletion month for that rate pair, a what-if,
+    not a plan.</p>
+
+    <h2>Why "under your assumptions"</h2>
+    <p>Nobody can tell you what markets will do, so corpusclock does not try. You
+    supply every rate; it applies one flat monthly rate and shows the consequence.
+    It ignores tax, fees, one-off expenses and healthcare shocks. This is not
+    financial advice — it is a ledger you can verify.</p>
+
+    <h2>Try it below</h2>
+    <p>The calculator below opens with sample scenarios you can edit or replace.
+    Nothing you type leaves this page.</p>
+  </main>
+
+  <div id="flutter-app"></div>
+
+  <script src="flutter.js" defer></script>
+  <script>
+    window.addEventListener('load', function () {
+      _flutter.loader.load({
+        onEntrypointLoaded: async function (engineInitializer) {
+          const appRunner = await engineInitializer.initializeEngine({
+            hostElement: document.getElementById('flutter-app')
+          });
+          await appRunner.runApp();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
